@@ -1,4 +1,5 @@
 import paho.mqtt.client as mqtt
+import datetime
 import logging
 from threading import Thread
 import json
@@ -8,17 +9,46 @@ from appJar import gui
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
-# TO DO: choose topics for publishing and subscribing 
+# TO DO: fill in topics for publishing and subscribing
+PUBLISH_RAT_TOPIC = ''
+SAVE_RAT_TOPIC = ''
+MQTT_TOPIC_SUBSCRIBE = ''
 
 class Teacher: 
     def __init__(self):
         self.rats = {}
-        pass
+        # get the logger object for the component
+        self._logger = logging.getLogger(__name__)
+        print('logging under name {}.'.format(__name__))
+        self._logger.info('Starting Component')
 
-    def create_rat(self, name, size):
-        rat = Rat(name, size)
+        # create a new MQTT client
+        self._logger.debug('Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
+        self.mqtt_client = mqtt.Client()
+
+        # callback methods
+        self.mqtt_client.on_connect = self.on_connect
+        self.mqtt_client.on_message = self.on_message
+
+        # Connect to the broker
+        self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+        
+        # start the internal loop to process MQTT messages
+        self.mqtt_client.loop_start()
+
+        self.create_gui()
+    
+    def on_connect(self, client, userdata, flags, rc):
+        """Request available RATs from database"""
+        self._logger.debug('MQTT connected to {}'.format(client))
+
+    def on_message(self, client, userdata, msg):
+        self._logger.debug('ON_MESSAGE | client: {} | userdata: {} | msg: {}'.format(client, userdata, msg))
+        print('{}: {} | {}'.format(client, userdata, msg))
+
+    def create_rat(self, name, size, subject='TTM4115'):
+        rat = Rat(name, size, subject)
         self.rats[rat.id] = rat
-        pass
     
     def create_question(self, rat_id, question, correct, false):
         rat = self.rats[rat_id]
@@ -26,70 +56,53 @@ class Teacher:
 
     def save_rat(self, rat_id):
         """send MQTT message to server (database) containing the RAT-object"""
-        pass
+        payload = json.dumps(self.rats[rat_id])
+        self._logger.info("Saving RAT {}".format(rat_id))
+        self.mqtt_client.publish(SAVE_RAT_TOPIC, payload)
 
     def publish_rat(self, rat_id):
         """send MQTT message to server (manager) indicating which RAT (rat_id) should be made available."""
-        pass
+        payload = json.dumps({
+            "command": "start_iRAT",
+            "RAT_ID": rat_id
+            })
+        self._logger.info("Publishing {} at {}".format(rat_id, datetime.datetime.now()))
+        self.mqtt_client.publish(PUBLISH_RAT_TOPIC, payload)
     
     def create_gui(self):
         self.app = gui()
-
-        def extract_timer_name(label):
-            label = label.lower()
-            return None
-
-        def extract_duration_seconds(label):
-            label = label.lower()
-            return None
-
-        def publish_command(command):
-            payload = json.dumps(command)
-            self._logger.info(command)
-            self.mqtt_client.publish(MQTT_TOPIC_INPUT, payload=payload, qos=2)
-
-        self.app.startLabelFrame('Starting timers:')
-        def on_button_pressed_start(title):
-            name = extract_timer_name(title)
-            duration = extract_duration_seconds(title)
-            command = {"command": "new_timer", "name": name, "duration": duration}
-            publish_command(command)
-        self.app.addButton('Start Spaghetti Timer', on_button_pressed_start)
-        self.app.addButton('Start Green Tea Timer', on_button_pressed_start)
-        self.app.addButton('Start Soft Eggs Timer', on_button_pressed_start)
-        self.app.stopLabelFrame()
-
-        self.app.startLabelFrame('Stopping timers:')
-        def on_button_pressed_stop(title):
-            name = extract_timer_name(title)
-            command = {"command": "cancel_timer", "name": name}
-            publish_command(command)
-        self.app.addButton('Cancel Spaghetti Timer', on_button_pressed_stop)
-        self.app.addButton('Cancel Green Tea Timer', on_button_pressed_stop)
-        self.app.addButton('Cancel Soft Eggs Timer', on_button_pressed_stop)
-        self.app.stopLabelFrame()
-
-        self.app.startLabelFrame('Asking for status:')
-        def on_button_pressed_status(title):
-            name = extract_timer_name(title)
-            if name is None:
-                command = {"command": "status_all_timers"}
-            else:
-                command = {"command": "status_single_timer", "name": name}
-            publish_command(command)
-        self.app.addButton('Get All Timers Status', on_button_pressed_status)
-        self.app.addButton('Get Spaghetti Timer Status', on_button_pressed_status)
-        self.app.addButton('Get Green Tea Timer Status', on_button_pressed_status)
-        self.app.addButton('Get Soft Eggs Timer Status', on_button_pressed_status)
-        self.app.stopLabelFrame()
-
+        self.app.addLabel("title", "Teacher Application")
+        self.app.setLabelBg("title", "yellow")
+        
+        def press(self, button):
+            if button == "Exit":
+                self.stop()
+                self.app.stop()
+    
+        self.app.addButtons(["Exit"], press)
         self.app.go()
 
+    def stop(self):
+        """
+        Stop the component.
+        """
+        # stop the MQTT client
+        self.mqtt_client.loop_stop()
+
+        # stop the state machine Driver
+        self.stm_driver.stop()
+        
+
 class Rat:
+    id : uuid
+    name : str
+    size : int
+    subject : str 
+    questions : dict
 
     def __init__(self, name, size, subject):
         self.name = name
-        self.id = uuid.uuid1()
+        self.id = uuid.uuid4()
         self.size = size
         self.subject = subject
         self.question_counter = 1
@@ -105,7 +118,30 @@ class Rat:
             self.questions.append(q) 
 
 class Question:
+    question : str
+    correct : str 
+    a : str 
+    b : str 
+    c : str
 
     def __init__(self, id, question, correct, false):
-        self.id = id
-        pass
+        self.question = question
+        self.correct = correct
+        self.a = false[0]
+        self.b = false[1]
+        self.c = false[2]
+
+# logging.DEBUG: Most fine-grained logging, printing everything
+# logging.INFO:  Only the most important informational log items
+# logging.WARN:  Show only warnings and errors.
+# logging.ERROR: Show only error messages.
+debug_level = logging.DEBUG
+logger = logging.getLogger(__name__)
+logger.setLevel(debug_level)
+ch = logging.StreamHandler()
+ch.setLevel(debug_level)
+formatter = logging.Formatter('%(asctime)s - %(name)-12s - %(levelname)-8s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+teacher = Teacher()
