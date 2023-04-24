@@ -6,7 +6,6 @@ import json
 import uuid
 from appJar import gui
 from teacherUserInterface import TeacherUserInterface
-from json import dumps
 
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
@@ -20,6 +19,7 @@ MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team5/#'
 class Teacher:
     def __init__(self):
         self.rats = {}
+
         # get the logger object for the component
         self._logger = logging.getLogger(__name__)
         print('logging under name {}.'.format(__name__))
@@ -27,7 +27,7 @@ class Teacher:
 
         # create a new MQTT client
         self._logger.debug(
-            'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
+            'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client = mqtt.Client()
 
         # callback methods
@@ -87,6 +87,49 @@ class Teacher:
         # stop the state machine Driver
         self.stm_driver.stop()
 
+# Transitions 
+t0 = {
+    'source': 'initial',
+    'target': 'idle'
+    }
+
+t1 = {
+    'source': 'idle',
+    'target': 'creating_rat',
+    'trigger': 'create_rat'
+    }
+
+t2 = {
+    'source': 'creating_rat',
+    'target': 'idle',
+    'trigger': 'cancel',
+    }
+
+t3 = {
+    'source': 'creating_rat',
+    'target': 'idle',
+    'trigger': 'save_rat',
+    'effect': 'save_rat(*)'
+}
+
+t4 = {
+    'source': 'idle',
+    'target': 'idle',
+    'trigger': 'publish_rat',
+    'effect': 'publish_rat'
+}
+
+# Add transition for incoming RATs and polling for RAT
+
+# States 
+# Add open/close window for UI in the 'entry' field for each state? 
+idle = {
+    'name': 'idle',
+    }
+
+creating_rat = {
+    'name': 'creating_rat'
+}
 
 class Rat:
     id: uuid
@@ -112,10 +155,6 @@ class Rat:
             self.question_counter += 1
             self.questions[self.id] = q
 
-    def json(self):
-        return dumps({'id': self.id, 'name': self.name, 'size': self.size})
-
-
 class Question:
     question: str
     correct: str
@@ -129,6 +168,11 @@ class Question:
         self.a = false[0]
         self.b = false[1]
         self.c = false[2]
+
+# # JSONEncoder
+# class RatEncoder(JSONEncoder):
+#     def default(self, o):
+#         return o.__dict__
 
 
 # logging.DEBUG: Most fine-grained logging, printing everything
