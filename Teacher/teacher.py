@@ -5,16 +5,16 @@ from threading import Thread
 import json
 import uuid
 from appJar import gui
-from Teacher.teacherUserInterface import TeacherUserInterface
+from teacherUserInterface import TeacherUserInterface
 from json import dumps
 
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = ''
-SAVE_RAT_TOPIC = ''
-MQTT_TOPIC_SUBSCRIBE = ''
+PUBLISH_RAT_TOPIC = 'ttm4115/team5/publish'
+SAVE_RAT_TOPIC = 'ttm4115/team5/save'
+MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team5/#'
 
 
 class Teacher:
@@ -102,10 +102,11 @@ class Rat:
         self.subject = subject
         self.question_counter = 1
         self.questions = {}
+        self.rat_complete = False
 
     def create_question(self, question, correct, false):
         if self.question_counter == self.size:
-            print("DO SOMETHING!")
+            self.rat_complete = True
         else:
             q = Question(self.question_counter, question, correct, false)
             self.question_counter += 1
