@@ -16,7 +16,7 @@ MQTT_PORT = 1883
 # TO DO: fill in topics for publishing and subscribing
 PUBLISH_RAT_TOPIC = ''
 SAVE_ANSWERS_TOPIC = 'ttm4115/team5/Answers'
-MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team5/#'
+MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
 
 
 class Student_client:
@@ -32,6 +32,14 @@ class Student_client:
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
 
+        # Connect to the broker
+        self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+
+        # start the internal loop to process MQTT messages
+        self.mqtt_client.loop_start()
+
+        self.mqtt_client.subscribe(MQTT_TOPIC_SUBSCRIBE)
+
     def start(self, broker, port):
 
         # create a new MQTT client
@@ -39,7 +47,7 @@ class Student_client:
             'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
 
-        self.client.subscribe("ttm4115")
+        self.client.subscribe(MQTT_TOPIC_SUBSCRIBE)
 
         try:
             # line below should not have the () after the function!
@@ -58,13 +66,14 @@ class Student_client:
         self._logger.debug('ON_MESSAGE | client: {} | userdata: {} | msg: {}'.format(
             client, userdata, msg))
         print('{}: {} | {}'.format(client, userdata, msg))
-        try:
-            msg = json.load(msg)
-        except:
-            print("something went wrong")
-            return
+        print(msg.payload)
+        msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
+        print(msg.keys())
+        print("command" in msg.keys())
         if "command" in msg.keys():
+            print(msg["command"])
             if msg["command"] == "start_iRAT":
+                print("starte_iRAT")
                 self.rat = msg["RAT"]
                 self.stm_driver.send("start_irat", "student")
 
@@ -88,9 +97,11 @@ class Student:
         self.rat = self.student_client.rat
         self.studentUI.rat = self.rat
         self.studentUI.start_irat()
+        print("start irate state")
 
     def sign_in(self):
         self.student = self.studentUI.student
+        print("sign in state")
 
     def irat_done(self):
         message = {"command": "student_iRAT_done",
@@ -100,6 +111,7 @@ class Student:
                    "answers": self.studetnUI.answers}
         self.mqtt_client.publish("topic", message)
         self.studentUI.answers = []
+        print("irat done state")
 
     def trat_done(self):
         message = {"command": "tRAT_answers",
@@ -202,24 +214,9 @@ student_client = Student_client()
 student.mqtt_client = student_client.mqtt_client
 student_client.stm_driver = driver
 
-studentUI = StudentUI(student)
+studentUI = StudentUI()
 studentUI.stm_driver = driver
-studentUI.create_ui()
 student.studentUI = studentUI
-student.studen_client = student_client
-
+student.student_client = student_client
 driver.start()
-
-# logging.DEBUG: Most fine-grained logging, printing everything
-# logging.INFO:  Only the most important informational log items
-# logging.WARN:  Show only warnings and errors.
-# logging.ERROR: Show only error messages.
-debug_level = logging.DEBUG
-logger = logging.getLogger(__name__)
-logger.setLevel(debug_level)
-ch = logging.StreamHandler()
-ch.setLevel(debug_level)
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)-12s - %(levelname)-8s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+studentUI.create_ui()
