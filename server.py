@@ -7,7 +7,7 @@ import json
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 MQTT_TOPIC_INPUT = 'ttm4115/team_5/command'
-MQTT_TOPIC_OUTPUT = 'ttm4115/team_5/answer'
+MQTT_TOPIC_OUTPUT = 'ttm4115/team_5/command'
 
 TOTAL_TEAMS = 3
 TEAM_ONE = 3
@@ -18,8 +18,8 @@ TEAM_ONE_C = 3
 TEAM_TWO_C = 3
 TEAM_THREE_C= 4
 
-
-
+teams_done_with_irat = []
+TEAM_IDS = [1,2,3]
 irat_finished_counter = 0
 trat_finished_counter = 0
 
@@ -49,7 +49,9 @@ class TimerLogic:
 
     def timer_completed(self):
         self._logger.debug('Timer {} expired.'.format(self.name))
-        self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, f'"command":"{self.name}_expired"')
+        t_name = self.name
+        string = str('{{"command":"{}_expired"}}'.format(t_name))
+        self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, string)
         self.stm.terminate()
 
 
@@ -87,7 +89,7 @@ class TeamManagerComponent:
         self._logger.debug('MQTT connected to {}'.format(client))
 
     def on_message(self, client, userdata, msg):
-        global TEAM_ONE, TEAM_TWO, TEAM_THREE, TEAM_ONE_C, TEAM_TWO_C, TEAM_THREE_C
+        global TEAM_ONE, TEAM_TWO, TEAM_THREE, TEAM_ONE_C, TEAM_TWO_C, TEAM_THREE_C, teams_done_with_irat, TEAM_IDS
 
         self._logger.debug('Incoming message to topic {}'.format(msg.topic))
 
@@ -134,6 +136,7 @@ class TeamManagerComponent:
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message)
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message_start_tRAT)#TODO: endre topic subscription
                         timer_stm2 = TimerLogic.create_machine("timer_team1", 2000000, self)
+                        teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm2)
                 
                 if team_id == "2":
@@ -143,6 +146,7 @@ class TeamManagerComponent:
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message)
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message_start_tRAT)#TODO: endre topic subscription
                         timer_stm3 = TimerLogic.create_machine("timer_team2", 2000000, self)
+                        teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm3)
                 
                 if team_id == "3":
@@ -152,15 +156,18 @@ class TeamManagerComponent:
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message)
                         self.mqtt_client.publish(MQTT_TOPIC_INPUT, message_start_tRAT) #TODO: endre topic subscription
                         timer_stm4 = TimerLogic.create_machine("timer_team3", 2000000, self)
+                        teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm4)
 
-            
+        
             except Exception as err:
                 print("An error occured in TeamManagerComponent")
                 """self._logger.debug('{} teams are done with iRAT'.format(irat_finished_counter))
             if irat_finished_counter == TOTAL_TEAMS:
                 self.stm_driver.send('rat_completed','t1')"""
-        
+
+                    
+
         if command == "tRAT_answers":
             try:
                 print(type(self))
@@ -312,7 +319,7 @@ class ManagerComponent:
 
 
 
-        """Får mqtt message fra teacher, sier at teacher vil starte t1 timeren. Dette fører til at iRAT starter"""
+        """Får mqtt message fra teacher, sier at teacher vil starte en RAT session. Dette fører til at iRAT starter"""
         if command == 'start_iRAT':
             irat_finished_counter = 0
             trat_finished_counter = 0
@@ -322,17 +329,20 @@ class ManagerComponent:
             try:
                 print(type(self))
                 rat_id = payload.get('RAT_ID')
+                print(f"RAT_ID is {rat_id}")
                 # create a new instance of the timer logic state machine
                 #timer_stm = TimerLogic.create_machine(timer_name, 10000, self)
 
-                #TODO: Start timer 10 min.
-                timer_stm1 = TimerLogic.create_machine("t1", 2000000, self)
+                #iRAT timer.
+                timer_stm1 = TimerLogic.create_machine("t1", 500000, self)
 
                 #TODO: Send iRAT with id X to all of the students
                 try:
-                    with open('ratDB.json', 'r') as f:
+                    with open('ratDB2.json', 'r') as f:
+                        print(f"Opened ratDB2.json")
                         data = json.load(f)
-                    question = data[str(rat_id)]['Questions']
+                        print(f"This is the data: {data}")
+                    question = data[str(rat_id)]['questions']
                     print(question)
                     self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, json.dumps(question))
                 except:
@@ -358,32 +368,42 @@ class ManagerComponent:
             self._logger.debug('{} teams are done with tRAT'.format(trat_finished_counter))
             if trat_finished_counter == TOTAL_TEAMS:
                 self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, "RAT SESSION DONE")
+        
+        elif command == 'fetch_RATs':
+            print("Fetching RATs")
+            def read_rat_names(file_path):
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
 
+                rat_names = {}
+                for rat_id, rat_data in data.items():
+                    rat_names[rat_id] = rat_data['name']
 
+                return rat_names
+            
+            file_path = 'ratDB2.json'
+            rat_names = read_rat_names(file_path)
+            string = f'{{"command": "available_RATs", "rat_info": "{(rat_names)}"}}'
 
-
-        """elif command == 'status_all_timers':
-            s = "List of all timers"
-            # We loop over all state machines in the driver. All of them are a
-            # timer that we should include in our list that we present to the
-            # user.
-            for name, stm in self.stm_driver._stms_by_id.items():
-                time = int(stm.get_timer('t')/1000)
-                s = s + 'Timer {} has about {} seconds left. '.format(stm.id, time)
-            self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, s)
-        elif command == 'status_single_timer':
-            # report the status of a single timer
-            try:
-                # print(type(self))
-                timer_name = payload.get('name')
-                # send a signal to the corresponding timer state machine to
-                # trigger reporting the status.
-                self.stm_driver.send_signal('report', timer_name)
-            except Exception as err:
-                self._logger.error('Invalid arguments to command. {}'.format(err))
-        else:
-            self._logger.error('Unknown command {}. Message ignored.'.format(command))
-"""
+            self.mqtt_client.publish(MQTT_TOPIC_OUTPUT, string)
+            
+                
+        elif command == 'create_RAT':
+            print("Creating RAT")
+                        
+            message = payload.get('RAT')
+            print(f"Message is {message}")
+            
+            
+            
+            with open("ratDB2.json", "r") as f:
+                data = json.load(f)
+                print(f"Data is {data}")
+                data.update(message)
+                
+            with open("ratDB2.json", "w") as f:
+                json.dump(message, f, indent=4)
+    
     def __init__(self):
         """
         Start the component.
