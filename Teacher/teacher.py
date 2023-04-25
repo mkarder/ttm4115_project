@@ -11,9 +11,9 @@ MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = 'ttm4115/team5/publish'
-SAVE_RAT_TOPIC = 'ttm4115/team5/save'
-MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team5/#'
+PUBLISH_RAT_TOPIC = 'ttm4115/team_5/publish'
+SAVE_RAT_TOPIC = 'ttm4115/team_5/save'
+MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
 
 
 class Teacher:
@@ -190,11 +190,6 @@ class ComplexEncoder(json.JSONEncoder):
             return obj.reprJSON()
         else:
             return json.JSONEncoder.default(self, obj)
-
-# # JSONEncoder
-# class RatEncoder(JSONEncoder):
-#     def default(self, o):
-#         return o.__dict__
 
 
 # logging.DEBUG: Most fine-grained logging, printing everything
