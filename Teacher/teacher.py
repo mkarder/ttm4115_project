@@ -61,9 +61,10 @@ class Teacher:
         rat = self.rats[rat_id]
         rat.create_question(question, correct, false)
 
+
     def save_rat(self, rat_id):
         """send MQTT message to server (database) containing the RAT-object"""
-        payload = json.dumps(self.rats[rat_id])
+        payload = json.dumps(self.rats[rat_id].reprJSON(), cls=ComplexEncoder)
         self._logger.info("Saving RAT {}".format(rat_id))
         self.mqtt_client.publish(SAVE_RAT_TOPIC, payload)
 
@@ -131,6 +132,8 @@ creating_rat = {
     'name': 'creating_rat'
 }
 
+
+# Sub-classes for RAT and question objects
 class Rat:
     id: uuid
     name: str
@@ -143,17 +146,26 @@ class Rat:
         self.id = uuid.uuid4()
         self.size = size
         self.subject = subject
-        self.question_counter = 1
+        self.question_counter = 0
         self.questions = {}
         self.rat_complete = False
 
+    def reprJSON(self):
+        return dict(id=str(self.id), name=self.name, size=self.size, subject=self.subject, questions=self.questions)
+    
+    # Add Exception handling
     def create_question(self, question, correct, false):
+        self.question_counter += 1
         if self.question_counter == self.size:
+            q = Question(question, correct, false)
+            self.questions[self.question_counter] = q
+            print(self.questions)
             self.rat_complete = True
         else:
-            q = Question(self.question_counter, question, correct, false)
-            self.question_counter += 1
-            self.questions[self.id] = q
+            q = Question(question, correct, false)
+            self.questions[self.question_counter] = q
+    
+    # def get_questions(self):
 
 class Question:
     question: str
@@ -162,12 +174,22 @@ class Question:
     b: str
     c: str
 
-    def __init__(self, id, question, correct, false):
+    def __init__(self, question, correct, false):
         self.question = question
         self.correct = correct
         self.a = false[0]
         self.b = false[1]
         self.c = false[2]
+
+    def reprJSON(self):
+        return dict(question=self.question, correct=self.correct, a=self.a, b=self.b, c=self.c)
+
+class ComplexEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj,'reprJSON'):
+            return obj.reprJSON()
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 # # JSONEncoder
 # class RatEncoder(JSONEncoder):

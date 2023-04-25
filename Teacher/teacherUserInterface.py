@@ -5,6 +5,7 @@ from appJar import gui
 class TeacherUserInterface():
     def __init__(self, teacher):
         self.teacher = teacher
+
         self.rats = {"id1": {"name": "name1", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}},
                      "id2": {"name": "name2", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}}}
         self.rat = None
@@ -26,7 +27,7 @@ class TeacherUserInterface():
 
             app.label("rat_name", self.rat.subject +
                       " " + name + "        " + str(int(size)))
-            app.label("Question", "Question " + str(self.rat.question_counter))
+            app.label("Question", "Question " + str(self.rat.question_counter)) # Increment not working in UI
             if self.rat.question_counter == self.rat.size:
                 app.hideButton("Next")
                 app.showButton("Save")
@@ -47,7 +48,7 @@ class TeacherUserInterface():
             app.entry("b", "")
             app.entry("c", "")
             app.entry("d", "")
-            if self.rat.question_counter == self.rat.size:
+            if self.rat.question_counter == self.rat.size - 1:
                 app.hideButton("Next")
                 app.showButton("Save")
 
