@@ -73,8 +73,7 @@ creating_rat = {
 
 class Teacher:
     def __init__(self):
-        self.rats = {"id1": {"name": "name1", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}},
-                    "id2": {"name": "name2", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}}}              # dict with all RAT objects
+        self.rats = {}             # dict with all RAT objects
 
         # get the logger object for the component
         self._logger = logging.getLogger(__name__)
@@ -177,7 +176,10 @@ class Rat:
 
     def __init__(self, name, size, subject, rat_id=None):
         self.name = name
-        self.id = uuid.uuid4() if rat_id!= None else rat_id
+        if rat_id == None:
+            self.id = uuid.uuid4()
+        else:
+            self.id = rat_id
         self.size = size
         self.subject = subject
         self.question_counter = 0

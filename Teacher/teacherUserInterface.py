@@ -63,14 +63,13 @@ class TeacherUserInterface():
             self.rat = None
 
         def publish_rat():
-            rat_id = app.getListBox("Available RATs")
+            rat_id = app.getListBox("Available RATs")[0]
             self.teacher.publish_rat(rat_id)
 
         def refresh_rats():
             app.clearListBox("Available RATs", callFunction=True)
             for k,v in self.teacher.rats.items():
-                app.addListItem("Available RATs", k)
-            
+                app.addListItem("Available RATs", v.name)
         
         app = gui("Teacher", "800x600")
         app.setSticky("")
@@ -82,8 +81,8 @@ class TeacherUserInterface():
         app.setButton("new", "New RAT")
         app.addButton("publish", publish_rat)
         app.setButton("publish", "Publish selected RAT")
-        app.addListBox("Available RATs", self.teacher.rats.keys(), 2, 0, 2)
-        
+        app.addListBox("Available RATs", [], 2, 0, 2)
+        refresh_rats()
         
         # i = 1
         # for id in self.teacher.rats:
