@@ -49,6 +49,7 @@ class StudentUI():
             self.app.hideSubWindow("sign_in")
             self.app.removeAllWidgets()
             self.app.addLabel("info", "Waiting")
+            self.app.addButton('QUIT', self.app.stop)
             self.stm_driver.send("sign_in", "student")
 
         def open_login():
@@ -197,6 +198,8 @@ class StudentUI():
         self.app.setButton("irat_next", "Next question")
         self.app.hideButton("irat_send")
         self.app.stopSubWindow()
+
+        self.app.addButton('QUIT', self.app.stop)
 
         self.app.go()
 
