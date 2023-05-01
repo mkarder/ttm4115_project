@@ -58,7 +58,7 @@ class Teacher:
         self._logger.debug('Command in message is {}'.format(command))
         if command == 'available_RATs':
             try:
-                self.rats.update(payload.get('available_RATs'))
+                self.rats.update(payload.get('rat_info'))
                 
             except Exception as err:
                 self._logger.error('Message sent with command {} had no valid RATs. Message ignored. {}'.format(command, err))
@@ -94,7 +94,7 @@ class Teacher:
         rat_id = self.find_rat(rat_name)
         if rat_id:
             payload = json.dumps({
-                "command": "start_iRAT",
+                "command": "start_RAT",
                 "RAT_ID": rat_id
             })
             self._logger.info("Publishing {} at {}".format(
