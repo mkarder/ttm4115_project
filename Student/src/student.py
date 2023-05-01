@@ -82,10 +82,10 @@ class Student:
                     self.stm.send("not_leader", "student")
             elif msg["command"] == "tRAT_done":
                 self.stm.send("trat_done", "student")
-            elif msg["command"] == "t1":
+            elif msg["command"] == "t1_expired":
                 self.stm.send("t1", "student")
-            elif msg["command"] == "t2":
-                self.stm.send("t2", "student")
+            elif msg["command"] == "timer_team{}_expired".format(self.team):
+                self.stm.send("t2_expired", "student")
 
     def stop(self):
         """
