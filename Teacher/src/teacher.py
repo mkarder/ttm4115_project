@@ -146,7 +146,6 @@ class Rat:
             q = Question(question, correct, false)
             self.questions[self.question_counter] = q
 
-
 class Question:
     question: str
     correct: str
@@ -171,6 +170,7 @@ class ComplexEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+# Function for deserializing RAT
 # Probably only needed for students
 def load_RAT(d : dict):
         rat = Rat(d['name'], d['size'], d['subject'], d['id'])
