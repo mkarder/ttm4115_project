@@ -62,37 +62,34 @@ class Student:
         self._logger.debug('MQTT connected to {}'.format(client))
 
     def on_message(self, client, userdata, msg):
-        self._logger.debug('ON_MESSAGE | client: {} | userdata: {} | msg: {}'.format(
-            client, userdata, msg))
+        self._logger.debug('Incoming message to topic {}'.format(msg.topic))
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
         except Exception as err:
             self._logger.error('Message sent to topic {} had no valid JSON. Message ignored. {}'.format(msg.topic, err))
             return
-        # msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
         command = payload.get('command')
         self._logger.debug('Command in message is {}'.format(command))
+
+        if command == "start_iRAT":
+            self.rat = payload.get('RAT')
+            self.stm.send("start_irat", "student")
+        elif command == "iRAT_done":
+            self.stm.send("irat_done", "student")
+        if command == "start_tRAT" and payload.get("team_id"):
+            if payload.get("leader_id") == self.student["student_id"]:
+                self.leader = True
+                self.stm.send("leader", "student")
+            elif payload.get("leader_id") != self.student["student_id"]:
+                self.leader = False
+                self.stm.send("not_leader", "student")
+        elif command == "tRAT_done":
+            self.stm.send("trat_done", "student")
+        if command == "timer_team{}_expired".format(self.student["team"]):
+            self.stm.send("t2_expired", "student")
+        elif command == "t1_expired":
+            self.stm.send("t1", "student")
         
-        if "command" in msg.keys():
-            if msg["command"] == "start_iRAT":
-                if "RAT" in msg.keys():
-                    self.rat = msg["RAT"]
-                    self.stm.send("start_irat", "student")
-            elif msg["command"] == "iRAT_done":
-                self.stm.send("irat_done", "student")
-            elif msg["command"] == "start_tRAT" and "leader" in msg.keys():
-                if msg["leader"] == self.student["student_id"]:
-                    self.leader = True
-                    self.stm.send("leader", "student")
-                elif msg["leader"] != self.student["student_id"]:
-                    self.leader = False
-                    self.stm.send("not_leader", "student")
-            elif msg["command"] == "tRAT_done":
-                self.stm.send("trat_done", "student")
-            elif msg["command"] == "t1_expired":
-                self.stm.send("t1", "student")
-            elif msg["command"] == "timer_team{}_expired".format(self.team):
-                self.stm.send("t2_expired", "student")
 
     def stop(self):
         """
@@ -120,7 +117,7 @@ class Student:
                    "student_id": str(self.student["student_id"]),
                    "RAT_id": str(self.rat["id"]),
                    "team_id": str(self.student["team"]),
-                   "answers": json.dumps(self.studentUI.answers)}
+                   "answers": self.studentUI.answers}
         self.mqtt_client.publish(MQTT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
         print("pre trat state")
@@ -136,10 +133,10 @@ class Student:
             message = {"command": "tRAT_answers",
                        "RAT_id": self.rat["id"],
                        "team_id": self.student["team"],
-                       "answers": json.dumps(self.studentUI.answers)}
+                       "answers": self.studentUI.answers}
             self.mqtt_client.publish(MQTT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
-        self.student = None
+        # self.student = None
 
     def waiting_for_leader(self):
         print("waiting for leader state")

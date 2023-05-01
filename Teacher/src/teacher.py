@@ -143,7 +143,7 @@ class Rat:
         self.rat_complete = False
 
     def reprJSON(self):
-        return dict(name=self.name, size=self.size, subject=self.subject, questions=self.questions)
+        return dict(name=self.name, id=str(self.id), size=self.size, subject=self.subject, questions=self.questions)
     
     # Add Exception handling
     def create_question(self, question, correct, false):
