@@ -15,61 +15,6 @@ PUBLISH_RAT_TOPIC = 'ttm4115/team_5/publish'
 SAVE_RAT_TOPIC = 'ttm4115/team_5/save'
 MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
 
-class TeacherLogic:
-
-    def __init__(self):
-        pass
-
-# Transitions 
-t0 = {
-    'source': 'initial',
-    'target': 'idle',
-    'effect': 'refresh_rat'
-    }
-
-t1 = {
-    'source': 'idle',
-    'target': 'creating_rat',
-    'trigger': 'create_rat'
-    }
-
-t2 = {
-    'source': 'creating_rat',
-    'target': 'idle',
-    'trigger': 'cancel',
-    }
-
-t3 = {
-    'source': 'creating_rat',
-    'target': 'idle',
-    'trigger': 'save_rat',
-    # 'effect': 'save_rat'
-}
-
-t4 = {
-    'source': 'idle',
-    'target': 'idle',
-    'trigger': 'publish_rat',
-    # 'effect': 'publish_rat'
-}
-
-# Add transition for incoming RATs and polling for RAT
-t5 = {
-    'source': 'idle',
-    'target': 'idle',
-    'trigger': 'new_rat',
-    'effect': 'fetch_rat'
-} 
-
-# States 
-# Add open/close window for UI in the 'entry' field for each state? 
-idle = {
-    'name': 'idle'
-    }
-
-creating_rat = {
-    'name': 'creating_rat'
-}
 
 class Teacher:
     def __init__(self):
@@ -235,33 +180,6 @@ def load_RAT(d : dict):
                                 [d['questions'][k]['a'], d['questions'][k]['b'], d['questions'][k]['c']])
             # rat.create_question(q['question'], q['correct'], [q['a'],q['b'],q['c']])
         return rat
-
-# Test load:
-r1 = load_RAT({
-    "id": "5397c02f-3572-42c4-b861-4f6cfb891186",
-    "name": "TestRAT",
-    "size": 2.0,
-    "subject": "TTM4115",
-    "questions": {
-      "1": {
-        "question": "TestQ1",
-        "correct": "correct",
-        "a": "fail1",
-        "b": "fail2",
-        "c": "fail1"
-      },
-      "2": {
-        "question": "TestQ2",
-        "correct": "correct",
-        "a": "fail1",
-        "b": "fail2",
-        "c": "fail3"
-      }
-    }
-  })
-
-#print(r1)
-#print(json.dumps(r1.reprJSON()))
 
 
 # logging.DEBUG: Most fine-grained logging, printing everything
