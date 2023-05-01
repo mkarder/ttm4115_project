@@ -14,12 +14,13 @@ MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = ''
+PUBLISH_RAT_TOPIC = 'ttm4115/team_5/irat'
 SAVE_ANSWERS_TOPIC = 'ttm4115/team5/Answers'
 MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
 
 
-class Student_client:
+class Student:
+
     def __init__(self):
         self.rats = {}
         # get the logger object for the component
@@ -65,17 +66,27 @@ class Student_client:
     def on_message(self, client, userdata, msg):
         self._logger.debug('ON_MESSAGE | client: {} | userdata: {} | msg: {}'.format(
             client, userdata, msg))
-        print('{}: {} | {}'.format(client, userdata, msg))
-        print(msg.payload)
         msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
-        print(msg.keys())
-        print("command" in msg.keys())
         if "command" in msg.keys():
-            print(msg["command"])
             if msg["command"] == "start_iRAT":
-                print("starte_iRAT")
-                self.rat = msg["RAT"]
-                self.stm_driver.send("start_irat", "student")
+                if "RAT" in msg.keys():
+                    self.rat = msg["RAT"]
+                    self.stm.send("start_irat", "student")
+            elif msg["command"] == "iRAT_done":
+                self.stm.send("irat_done", "student")
+            elif msg["command"] == "start_tRAT" and "leader" in msg.keys():
+                if msg["leader"] == self.student["student_id"]:
+                    self.leader = True
+                    self.stm.send("leader", "student")
+                elif msg["leader"] != self.student["student_id"]:
+                    self.leader = False
+                    self.stm.send("not_leader", "student")
+            elif msg["command"] == "tRAT_done":
+                self.stm.send("trat_done", "student")
+            elif msg["command"] == "t1":
+                self.stm.send("t1", "student")
+            elif msg["command"] == "t2":
+                self.stm.send("t2", "student")
 
     def stop(self):
         """
@@ -87,46 +98,46 @@ class Student_client:
         # stop the state machine Driver
         self.stm_driver.stop()
 
-
-class Student:
-
-    def __init__(self):
-        self.answers = []
-
     def start_irat(self):
-        self.rat = self.student_client.rat
+        self.rat = self.rat
         self.studentUI.rat = self.rat
         self.studentUI.start_irat()
-        print("start irate state")
+        print("conducting irate state")
 
     def sign_in(self):
         self.student = self.studentUI.student
-        print("sign in state")
+        print("pre irat state")
 
     def irat_done(self):
+        self.studentUI.irat_done()
         message = {"command": "student_iRAT_done",
-                   "student_id": self.student.student_id,
-                   "RAT_id": self.rat.id,
-                   "team_id": self.student.team,
-                   "answers": self.studetnUI.answers}
-        self.mqtt_client.publish("topic", message)
+                   "student_id": str(self.student["student_id"]),
+                   "RAT_id": str(self.rat["id"]),
+                   "team_id": str(self.student["team"]),
+                   "answers": json.dumps(self.studentUI.answers)}
+        self.mqtt_client.publish(PUBLISH_RAT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
-        print("irat done state")
+        print("pre trat state")
+
+    def start_trat(self):
+        self.studentUI.start_trat()
+        print("conducting trat state")
 
     def trat_done(self):
-        message = {"command": "tRAT_answers",
-                   "RAT_id": self.rat.id,
-                   "team_id": self.student.team,
-                   "answers": self.studetnUI.answers}
-        self.mqtt_client.publish("topic", message)
+        self.studentUI.trat_done()
+        print("trat done, idle state")
+        if self.leader:
+            message = {"command": "tRAT_answers",
+                       "RAT_id": self.rat["id"],
+                       "team_id": self.student["team"],
+                       "answers": json.dumps(self.studentUI.answers)}
+            self.mqtt_client.publish(PUBLISH_RAT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
+        self.student = None
 
-    # do something
-    def transistion_1():
-        if ...:
-            return 's1'
-        else:
-            return 's2'
+    def waiting_for_leader(self):
+        print("waiting for leader state")
+        self.studentUI.trat_not_leader()
 
 
 t0 = {'source': 'initial',
@@ -154,51 +165,41 @@ t4 = {'trigger': 'leader',
 
 t5 = {'trigger': 'trat_done',
       'source': 'conducting_trat',
-      'target': 'waiting_for_leader',
+      'target': 'idle',
       'effect': 'trat_done'}
 
-t6 = {'trigger': 'leader_done',
+t6 = {'trigger': 'trat_done',
       'source': 'waiting_for_leader',
-      'target': 'idle waiting_for_leader',
-      'function': 'transistion_1'}
+      'target': 'idle',
+      'effect': 'trat_done'}
 
 t7 = {'trigger': 't2',
       'source': 'conducting_trat',
-      'target': 'waiting_for_leader',
-      'effect': ''}
+      'target': 'idle',
+      'effect': 'trat_done'}
 
-t8 = {'trigger': 'not_leader',
+t8 = {'trigger': 't2',
+      'source': 'waiting_for_leader',
+      'target': 'idle',
+      'effect': 'trat_done'}
+
+t9 = {'trigger': 'not_leader',
       'source': 'pre_trat',
       'target': 'waiting_for_leader',
       'effect': 'waiting_for_leader'}
 
-t9 = {'trigger': 't1',
-      'source': 'conducting_irat',
-      'target': 'pre_trat',
-      'effect': 'irat_done'}
+t10 = {'trigger': 't1',
+       'source': 'conducting_irat',
+       'target': 'pre_trat',
+       'effect': 'irat_done'}
 
-t10 = {'trigger': 'cancel',
+t11 = {'trigger': 'cancel',
        'source': 'pre_irat',
        'target': 'idle',
        'effect': ''}
 
-t11 = {'trigger': 'trat_answer',
-       'source': 'conduction_trat',
-       'target': 'conduction_trat',
-       'effect': 'send_trat_answer'}
 
-t12 = {'trigger': 'trat_result',
-       'source': 'conducting_trat',
-       'target': 'conducting_trat',
-       'effect': 'show_result'}
-
-t13 = {'trigger': 'rat',
-       'source': 'conducting_irat',
-       'target': 'conduction_irat',
-       'effect': 'show_irat'}
-
-
-transitions = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13]
+transitions = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]
 
 
 student = Student()
@@ -206,17 +207,14 @@ student_machine = Machine(
     transitions=transitions, obj=student, name="student")
 student.stm = student_machine
 
+studentUI = StudentUI()
+studentUI.stm = student_machine
+student.studentUI = studentUI
+
 
 driver = Driver()
 driver.add_machine(student_machine)
 
-student_client = Student_client()
-student.mqtt_client = student_client.mqtt_client
-student_client.stm_driver = driver
 
-studentUI = StudentUI()
-studentUI.stm_driver = driver
-student.studentUI = studentUI
-student.student_client = student_client
 driver.start()
 studentUI.create_ui()
