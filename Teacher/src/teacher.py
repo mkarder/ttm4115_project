@@ -11,8 +11,8 @@ MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = 'ttm4115/team_5/publish'
-SAVE_RAT_TOPIC = 'ttm4115/team_5/save'
+PUBLISH_RAT_TOPIC = 'ttm4115/team_5/command'
+SAVE_RAT_TOPIC = 'ttm4115/team_5/command'
 MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
 
 
