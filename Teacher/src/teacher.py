@@ -84,15 +84,22 @@ class Teacher:
         self._logger.info("Saving RAT {}".format(rat_id))
         self.mqtt_client.publish(SAVE_RAT_TOPIC, payload)
 
-    def publish_rat(self, rat_id):
+    def find_rat(self, rat_name):
+        for k, v in self.rats.items():
+            if rat_name == self.rats[k].name:
+                return str(k)
+
+    def publish_rat(self, rat_name):
         """send MQTT message to server (manager) indicating which RAT (rat_id) should be made available."""
-        payload = json.dumps({
-            "command": "start_iRAT",
-            "RAT_ID": rat_id
-        })
-        self._logger.info("Publishing {} at {}".format(
-            rat_id, datetime.datetime.now()))
-        self.mqtt_client.publish(PUBLISH_RAT_TOPIC, payload)
+        rat_id = self.find_rat(rat_name)
+        if rat_id:
+            payload = json.dumps({
+                "command": "start_iRAT",
+                "RAT_ID": rat_id
+            })
+            self._logger.info("Publishing {} at {}".format(
+                rat_id, datetime.datetime.now()))
+            self.mqtt_client.publish(PUBLISH_RAT_TOPIC, payload)
 
     def fetch_rat(self):
         payload = json.dumps({

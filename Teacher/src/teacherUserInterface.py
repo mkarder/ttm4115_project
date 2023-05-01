@@ -63,8 +63,8 @@ class TeacherUserInterface():
             self.rat = None
 
         def publish_rat():
-            rat_id = app.getListBox("Available RATs")[0]
-            self.teacher.publish_rat(rat_id)
+            rat_name = app.getListBox("Available RATs")[0]
+            self.teacher.publish_rat(rat_name)
 
         def refresh_rats():
             app.clearListBox("Available RATs", callFunction=True)
