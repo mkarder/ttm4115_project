@@ -281,7 +281,9 @@ class ManagerComponent:
                     with open('ratDB2.json', 'r') as f:
                         print(f"Opened ratDB2.json")
                         data = json.load(f)
-                    question = data[str(rat_id)]['questions']
+                    question = data[str(rat_id)]
+                    print(type(question))
+                    print(question)
                     
                     new_data = {
                         #TODO change to start_iRAT when topic is decided
@@ -289,7 +291,7 @@ class ManagerComponent:
                         **question
                         }
                     
-                    self.mqtt_client.publish(MQTT_TOPIC_STUDENT, json.dumps(new_data))
+                    self.mqtt_client.publish(MQTT_TOPIC_STUDENT, json.dumps({"command" : "start_iRAT", "RAT" : question}))
                 except:
                     print("An error occured")
 
