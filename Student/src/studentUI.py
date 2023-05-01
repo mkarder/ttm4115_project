@@ -83,7 +83,11 @@ class StudentUI():
             self.app.hideSubWindow("sign_in")
             self.app.removeAllWidgets()
             self.app.addLabel("info", "Waiting for a RAT")
+            self.app.addButton('QUIT', self.app.stop)
             self.stm.send("sign_in", "student")
+
+        def open_login():
+            self.app.showSubWindow("sign_in")
 
         def cancel():
             self.stm.send("cancel", "student")
@@ -265,6 +269,8 @@ class StudentUI():
         self.app.setButton("irat_next", "Next question")
         self.app.hideButton("irat_send")
         self.app.stopSubWindow()
+
+        self.app.addButton('QUIT', self.app.stop)
 
         self.app.go()
 
