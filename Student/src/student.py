@@ -69,8 +69,9 @@ class Student:
         msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
         if "command" in msg.keys():
             if msg["command"] == "start_iRAT":
-                self.rat = msg["RAT"]
-                self.stm.send("start_irat", "student")
+                if "RAT" in msg.keys():
+                    self.rat = msg["RAT"]
+                    self.stm.send("start_irat", "student")
             elif msg["command"] == "iRAT_done":
                 self.stm.send("irat_done", "student")
             elif msg["command"] == "start_tRAT" and "leader" in msg.keys():
