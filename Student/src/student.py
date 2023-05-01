@@ -14,9 +14,7 @@ MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = 'ttm4115/team_5/irat'
-SAVE_ANSWERS_TOPIC = 'ttm4115/team5/Answers'
-MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
+MQTT_TOPIC = 'ttm4115/team_5/student'
 
 
 class Student:
@@ -39,7 +37,7 @@ class Student:
         # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
 
-        self.mqtt_client.subscribe(MQTT_TOPIC_SUBSCRIBE)
+        self.mqtt_client.subscribe(MQTT_TOPIC)
 
     def start(self, broker, port):
 
@@ -48,7 +46,7 @@ class Student:
             'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
 
-        self.client.subscribe(MQTT_TOPIC_SUBSCRIBE)
+        self.client.subscribe(MQTT_TOPIC)
 
         try:
             # line below should not have the () after the function!
@@ -66,7 +64,15 @@ class Student:
     def on_message(self, client, userdata, msg):
         self._logger.debug('ON_MESSAGE | client: {} | userdata: {} | msg: {}'.format(
             client, userdata, msg))
-        msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
+        try:
+            payload = json.loads(msg.payload.decode("utf-8"))
+        except Exception as err:
+            self._logger.error('Message sent to topic {} had no valid JSON. Message ignored. {}'.format(msg.topic, err))
+            return
+        # msg = json.loads(str(msg.payload.decode("utf-8", "ignore")))
+        command = payload.get('command')
+        self._logger.debug('Command in message is {}'.format(command))
+        
         if "command" in msg.keys():
             if msg["command"] == "start_iRAT":
                 if "RAT" in msg.keys():
@@ -115,7 +121,7 @@ class Student:
                    "RAT_id": str(self.rat["id"]),
                    "team_id": str(self.student["team"]),
                    "answers": json.dumps(self.studentUI.answers)}
-        self.mqtt_client.publish(PUBLISH_RAT_TOPIC, json.dumps(message))
+        self.mqtt_client.publish(MQTT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
         print("pre trat state")
 
@@ -131,7 +137,7 @@ class Student:
                        "RAT_id": self.rat["id"],
                        "team_id": self.student["team"],
                        "answers": json.dumps(self.studentUI.answers)}
-            self.mqtt_client.publish(PUBLISH_RAT_TOPIC, json.dumps(message))
+            self.mqtt_client.publish(MQTT_TOPIC, json.dumps(message))
         self.studentUI.answers = []
         self.student = None
 
@@ -200,6 +206,16 @@ t11 = {'trigger': 'cancel',
 
 
 transitions = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11]
+
+debug_level = logging.DEBUG
+logger = logging.getLogger(__name__)
+logger.setLevel(debug_level)
+ch = logging.StreamHandler()
+ch.setLevel(debug_level)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)-12s - %(levelname)-8s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 student = Student()

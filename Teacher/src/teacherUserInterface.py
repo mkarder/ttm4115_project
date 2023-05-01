@@ -1,5 +1,6 @@
 # import the library
 from appJar import gui
+import time
 
 
 # TO DO: fix question incrementer when creating new RATs
@@ -67,9 +68,11 @@ class TeacherUserInterface():
             self.teacher.publish_rat(rat_name)
 
         def refresh_rats():
+            self.teacher.fetch_rat()
+            time.sleep(1)
             app.clearListBox("Available RATs", callFunction=True)
-            for k,v in self.teacher.rats.items():
-                app.addListItem("Available RATs", v.name)
+            for k,v in self.teacher.available_rats.items():
+                app.addListItem("Available RATs", v)
         
         app = gui("Teacher", "800x600")
         app.setSticky("")

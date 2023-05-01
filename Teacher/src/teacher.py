@@ -11,15 +11,13 @@ MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
 
 # TO DO: fill in topics for publishing and subscribing
-PUBLISH_RAT_TOPIC = 'ttm4115/team_5/command'
-SAVE_RAT_TOPIC = 'ttm4115/team_5/command'
-MQTT_TOPIC_SUBSCRIBE = 'ttm4115/team_5/#'
+MQTT_TOPIC = 'ttm4115/team_5/teacher'
 
 
 class Teacher:
     def __init__(self):
         self.rats = {}             # dict with all RAT objects
-
+        self.available_rats = {} 
         # get the logger object for the component
         self._logger = logging.getLogger(__name__)
         print('logging under name {}.'.format(__name__))
@@ -40,6 +38,8 @@ class Teacher:
         # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
 
+        self.mqtt_client.subscribe(MQTT_TOPIC)
+
         # load the user interface
         self.ui = TeacherUserInterface(self)
 
@@ -58,7 +58,10 @@ class Teacher:
         self._logger.debug('Command in message is {}'.format(command))
         if command == 'available_RATs':
             try:
-                self.rats.update(payload.get('rat_info'))
+                self.available_rats.update(payload.get('rat_info'))
+                # for k, v in temp:
+                #     self.rats[k] = Rat(v, 0)
+                # self.rats.update(payload.get('rat_info'))
                 
             except Exception as err:
                 self._logger.error('Message sent with command {} had no valid RATs. Message ignored. {}'.format(command, err))
@@ -68,6 +71,7 @@ class Teacher:
     def create_rat(self, name, size, subject='TTM4115'):
         rat = Rat(name, size, subject)
         self.rats[rat.id] = rat
+        self.available_rats[rat.id] = rat.name
         return rat
 
     def create_question(self, rat_id, question, correct, false):
@@ -82,11 +86,11 @@ class Teacher:
             },
             cls=ComplexEncoder)
         self._logger.info("Saving RAT {}".format(rat_id))
-        self.mqtt_client.publish(SAVE_RAT_TOPIC, payload)
+        self.mqtt_client.publish(MQTT_TOPIC, payload)
 
     def find_rat(self, rat_name):
-        for k, v in self.rats.items():
-            if rat_name == self.rats[k].name:
+        for k, v in self.available_rats.items():
+            if rat_name == v:
                 return str(k)
 
     def publish_rat(self, rat_name):
@@ -99,13 +103,13 @@ class Teacher:
             })
             self._logger.info("Publishing {} at {}".format(
                 rat_id, datetime.datetime.now()))
-            self.mqtt_client.publish(PUBLISH_RAT_TOPIC, payload)
+            self.mqtt_client.publish(MQTT_TOPIC, payload)
 
     def fetch_rat(self):
         payload = json.dumps({
             "command": "fetch_RATs"
         })
-        self.mqtt_client.publish(PUBLISH_RAT_TOPIC, payload)
+        self.mqtt_client.publish(MQTT_TOPIC, payload)
 
 
     def stop(self):
@@ -126,7 +130,7 @@ class Rat:
     subject: str
     questions: dict
 
-    def __init__(self, name, size, subject, rat_id=None):
+    def __init__(self, name, size=0, subject='TTM4115', rat_id=None):
         self.name = name
         if rat_id == None:
             self.id = uuid.uuid4()
@@ -193,7 +197,7 @@ def load_RAT(d : dict):
 # logging.INFO:  Only the most important informational log items
 # logging.WARN:  Show only warnings and errors.
 # logging.ERROR: Show only error messages.
-debug_level = logging.INFO
+debug_level = logging.DEBUG
 logger = logging.getLogger(__name__)
 logger.setLevel(debug_level)
 ch = logging.StreamHandler()
