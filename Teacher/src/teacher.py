@@ -78,7 +78,7 @@ class Teacher:
         """send MQTT message to server (database) containing the RAT-object"""
         payload = json.dumps({
             "command": "create_RAT",
-            "RAT": self.rats[rat_id].reprJSON()
+            str(rat_id): self.rats[rat_id].reprJSON()
             },
             cls=ComplexEncoder)
         self._logger.info("Saving RAT {}".format(rat_id))
@@ -139,7 +139,7 @@ class Rat:
         self.rat_complete = False
 
     def reprJSON(self):
-        return dict(id=str(self.id), name=self.name, size=self.size, subject=self.subject, questions=self.questions)
+        return dict(name=self.name, size=self.size, subject=self.subject, questions=self.questions)
     
     # Add Exception handling
     def create_question(self, question, correct, false):
