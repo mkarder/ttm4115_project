@@ -29,11 +29,6 @@ class Student:
         self._logger.info('Starting Component')
         self.mqtt_client = mqtt.Client()
 
-        self.studentUI = StudentUI()
-        self.studentUI.stm = self.stm
-
-        self.studentUI.create_ui()
-
         # callback methods
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
@@ -130,7 +125,6 @@ class Student:
     def trat_done(self):
         self.studentUI.trat_done()
         print("trat done, idle state")
-        print(self.leader)
         if self.leader:
             message = {"command": "tRAT_answers",
                        "RAT_id": self.rat["id"],
@@ -212,8 +206,14 @@ student_machine = Machine(
     transitions=transitions, obj=student, name="student")
 student.stm = student_machine
 
+studentUI = StudentUI()
+studentUI.stm = student_machine
+student.studentUI = studentUI
+
 
 driver = Driver()
 driver.add_machine(student_machine)
 
+
 driver.start()
+studentUI.create_ui()

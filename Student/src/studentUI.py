@@ -40,6 +40,7 @@ class StudentUI():
             self.app.showButton("irat_send")
 
     def start_trat(self):
+        self.app.setLabel("info", "Conducting tRAT")
         self.app.showSubWindow("conduct_trat")
         self.app.setMessage("trat_name", self.rat["name"])
         self.app.setLabel("trat_q_nr", "1")
@@ -133,7 +134,7 @@ class StudentUI():
             alt = check_answer(
                 self.rat["questions"][self.app.getLabel("trat_q_nr")], answer)
             q_num = int(self.app.getLabel("trat_q_nr")) + 1
-            if len(self.answers) == int(self.app.getLabel("trat_q_nr")):
+            if len(self.answers) < int(self.app.getLabel("trat_q_nr")):
                 self.answers.append(alt)
             if alt == "correct":
                 if str(q_num) not in self.rat["questions"]:
