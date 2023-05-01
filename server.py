@@ -119,6 +119,7 @@ class TeamManagerComponent:
                 score = answers.count("correct")
                 print(f"The score for student id {student_id}, team {team_id}, RAT {RAT_id}: {score}")
                 
+                """
                 #Åpner studentscores og legger til iRAT scoren på riktig sted
                 with open('studentscores.json', 'r') as f:
                     data = json.load(f)
@@ -126,9 +127,10 @@ class TeamManagerComponent:
 
                 with open('studentscores.json', 'w') as f:
                     json.dump(data, f)
+                """
 
                 message_non_parsed = {"command":"iRAT_done"}
-                message_start_tRAT_non_parsed = {"command":"start_tRAT"}
+                message_start_tRAT_non_parsed = {"command":"start_tRAT", "team_id":team_id, "leader_id": "1"}
                 message = json.dumps(message_non_parsed)
                 message_start_tRAT = json.dumps(message_start_tRAT_non_parsed)
                 if team_id == "1":
@@ -180,7 +182,8 @@ class TeamManagerComponent:
                 score = answers.count("correct")
                 print(f"Score for team {team_id}: {score}")
 
-                #Updates scores
+                """   
+              #Updates scores
                 with open('studentscores.json') as f:
                     data = json.load(f)
                     print("opened file")
@@ -191,7 +194,9 @@ class TeamManagerComponent:
                         student[RAT_id]["tRAT_score"] = str(score)
                 with open('studentscores.json', 'w') as f:
                     print("Writing to file")
-                    json.dump(data, f)
+                    json.dump(data, f) 
+                    
+                """
                 
                 #Stops timer
                 if team_id == "1":
