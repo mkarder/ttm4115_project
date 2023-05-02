@@ -121,11 +121,11 @@ class TeamManagerComponent:
                 
                 """
                 #Åpner studentscores og legger til iRAT scoren på riktig sted
-                with open('studentscores.json', 'r') as f:
+                with open('Server/resources/ratDB2.json', 'r') as f:
                     data = json.load(f)
                 data[student_id][RAT_id]['iRAT_score'] = str(score)
 
-                with open('studentscores.json', 'w') as f:
+                with open('Server/resources/ratDB2.json', 'w') as f:
                     json.dump(data, f)
                 """
 
@@ -184,7 +184,7 @@ class TeamManagerComponent:
 
                 """   
               #Updates scores
-                with open('studentscores.json') as f:
+                with open('Server/resources/ratDB2.json') as f:
                     data = json.load(f)
                     print("opened file")
                 for student in data.values():
@@ -192,7 +192,7 @@ class TeamManagerComponent:
                     if student["team"] == team_id:
                         print(f"team id: {team_id}")
                         student[RAT_id]["tRAT_score"] = str(score)
-                with open('studentscores.json', 'w') as f:
+                with open('Server/resources/ratDB2.json', 'w') as f:
                     print("Writing to file")
                     json.dump(data, f) 
                     
@@ -283,7 +283,7 @@ class ManagerComponent:
                 timer_stm1 = TimerLogic.create_machine("t1", 200000, self)
 
                 try:
-                    with open('ratDB2.json', 'r') as f:
+                    with open('Server/resources/ratDB2.json', 'r') as f:
                         print(f"Opened ratDB2.json")
                         data = json.load(f)
                     question = data[str(rat_id)]
@@ -297,8 +297,8 @@ class ManagerComponent:
                         }
                     
                     self.mqtt_client.publish(MQTT_TOPIC_STUDENT, json.dumps({"command" : "start_iRAT", "RAT" : question}))
-                except:
-                    print("An error occured")
+                except Exception as err:
+                    print("Error occured in Manager component after start_RAT error: {}".format(err))
 
                 # add the machine to the driver to start it
                 self.stm_driver.add_machine(timer_stm1)
@@ -329,7 +329,7 @@ class ManagerComponent:
                     rat_names[rat_id] = rat_data['name']
                 return rat_names
             
-            file_path = 'ratDB2.json'
+            file_path = 'Server/resources/ratDB2.json'
             rat_names = read_rat_names(file_path)
             string = json.dumps({"command": "available_RATs", "rat_info": rat_names})
             self.mqtt_client.publish(MQTT_TOPIC_TEACHER, string)
@@ -339,10 +339,10 @@ class ManagerComponent:
             print("Creating RAT")
             message = payload
             message.pop('command', None)   
-            with open("ratDB2.json", "r") as f:
+            with open("Server/resources/ratDB2.json", "r") as f:
                 data = json.load(f)
                 data.update(message)
-            with open("ratDB2.json", "w") as f:
+            with open("Server/resources/ratDB2.json", "w") as f:
                 json.dump(data, f, indent=4)
     
     def __init__(self):
