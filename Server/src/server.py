@@ -26,12 +26,6 @@ irat_finished_counter = 0
 trat_finished_counter = 0
 
 class TimerLogic:   
-    """
-    State Machine for a named timer.
-
-    This is the support object for a state machine that models a single
-    timer.
-    """
     def __init__(self, name, duration, component):
         self._logger = logging.getLogger(__name__)
         self.name = name
@@ -39,9 +33,7 @@ class TimerLogic:
         self.component = component
         self.mqtt_client = mqtt.Client()
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-        # subscribe to proper topic(s) of your choice
         self.mqtt_client.subscribe(MQTT_TOPIC_INPUT)
-        # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
 
     def started(self):
@@ -49,7 +41,6 @@ class TimerLogic:
         self._logger.debug('New timer {} with duration {} started.'
                            .format(self.name, self.duration))
         
-    #Sends message to student that timer is done
     def timer_completed(self):
         self._logger.debug('Timer {} expired.'.format(self.name))
         t_name = self.name
@@ -59,11 +50,6 @@ class TimerLogic:
 
 
     def create_machine(timer_name, duration, component):
-        """
-        Create a complete state machine instance for the timer object.
-        Note that this method is static (no self argument), since it is a helper
-        method to create this object.
-        """
         timer_logic = TimerLogic(name=timer_name, duration=duration, component=component)
         t0 = {'source': 'initial',
               'target': 'active',
@@ -87,7 +73,6 @@ class TimerLogic:
 
 
 class TeamManagerComponent:
-
     def on_connect(self, client, userdata, flags, rc):
         self._logger.debug('MQTT connected to {}'.format(client))
 
@@ -104,8 +89,6 @@ class TeamManagerComponent:
         command = payload.get('command')
         self._logger.debug('Command in message is {}'.format(command))
 
-
-        """Får mqtt message fra teacher, sier at teacher vil starte t1 timeren. Dette fører til at iRAT starter"""
         if command == 'student_iRAT_done':
 
             try:
@@ -138,7 +121,7 @@ class TeamManagerComponent:
                     if TEAM_ONE == TEAM_ONE_C:
                         self._logger.debug('everyone in TEAM_ONE is done with iRAT, starting tRAT')
                         self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message)
-                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT)#TODO: endre topic subscription
+                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT)
                         timer_stm2 = TimerLogic.create_machine("timer_team1", 200000, self)
                         teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm2)
@@ -148,7 +131,7 @@ class TeamManagerComponent:
                     if TEAM_TWO == TEAM_TWO_C:
                         self._logger.debug('everyone in TEAM_TWO is done with iRAT, starting tRAT')
                         self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message)
-                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT)#TODO: endre topic subscription
+                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT)
                         timer_stm3 = TimerLogic.create_machine("timer_team2", 200000, self)
                         teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm3)
@@ -158,7 +141,7 @@ class TeamManagerComponent:
                     if TEAM_THREE == TEAM_THREE_C:
                         self._logger.debug('everyone in TEAM_THREE is done with iRAT, starting tRAT')
                         self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message)
-                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT) #TODO: endre topic subscription
+                        self.mqtt_client.publish(MQTT_TOPIC_STUDENT, message_start_tRAT)
                         timer_stm4 = TimerLogic.create_machine("timer_team3", 200000, self)
                         teams_done_with_irat.append(team_id)
                         self.stm_driver.add_machine(timer_stm4)
@@ -166,9 +149,6 @@ class TeamManagerComponent:
         
             except Exception as err:
                 print("An error occured in TeamManagerComponent")
-                """self._logger.debug('{} teams are done with iRAT'.format(irat_finished_counter))
-            if irat_finished_counter == TOTAL_TEAMS:
-                self.stm_driver.send('rat_completed','t1')"""
 
 
         if command == "tRAT_answers":
@@ -198,7 +178,6 @@ class TeamManagerComponent:
                     
                 """
                 
-                #Stops timer
                 if team_id == "1":
                     self.stm_driver.send('rat_completed','timer_team1')
                 elif team_id == "2":
@@ -206,7 +185,6 @@ class TeamManagerComponent:
                 elif team_id == "3":
                     self.stm_driver.send('rat_completed','timer_team3')
 
-                #sender mqtt, slik at manager kan stoppe RAT session
                 trat_message_non_parsed = {"command":"tRAT_done"}
                 tRAT_message = json.dumps(trat_message_non_parsed)
                 self.mqtt_client.publish(MQTT_TOPIC_INPUT, tRAT_message)
@@ -216,34 +194,22 @@ class TeamManagerComponent:
                 print("Error occured in Team manager component adter tRAT_done")
 
     def __init__(self):
-        # get the logger object for the component
         self._logger = logging.getLogger(__name__)
         print('logging under name {}.'.format(__name__))
         self._logger.info('Starting Component')
-
-        # create a new MQTT client
         self._logger.debug('Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client = mqtt.Client()
-        # callback methods
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
-        # Connect to the broker
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-        # subscribe to proper topic(s) of your choice
         self.mqtt_client.subscribe(MQTT_TOPIC_INPUT)
-        # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
-
-        # we start the stmpy driver, without any state machines for now
         self.stm_driver = stmpy.Driver()
         self.stm_driver.start(keep_active=True)
         self._logger.debug('Component initialization finished')
 
     def stop(self):
-        # stop the MQTT client
         self.mqtt_client.loop_stop()
-
-        # stop the state machine Driver
         self.stm_driver.stop()
 
 class ManagerComponent:
@@ -253,8 +219,6 @@ class ManagerComponent:
     def on_message(self, client, userdata, msg):
         global irat_finished_counter, TEAM_ONE, TEAM_TWO, TEAM_THREE, trat_finished_counter
         self._logger.debug('Incoming message to topic {}'.format(msg.topic))
-        # encdoding from bytes to string. This
-
 
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
@@ -264,8 +228,6 @@ class ManagerComponent:
         command = payload.get('command')
         self._logger.debug('Command in message is {}'.format(command))
 
-
-        """Får mqtt message fra teacher, sier at teacher vil starte en RAT session. Dette fører til at iRAT starter"""
         if command == 'start_RAT':
             irat_finished_counter = 0
             trat_finished_counter = 0
@@ -276,11 +238,7 @@ class ManagerComponent:
                 print(type(self))
                 rat_id = payload.get('RAT_ID')
                 print(f"RAT_ID is {rat_id}")
-                # create a new instance of the timer logic state machine
-                #timer_stm = TimerLogic.create_machine(timer_name, 10000, self)
-
-                #iRAT timer.
-                timer_stm1 = TimerLogic.create_machine("t1", 200000, self)
+                timer_stm1 = TimerLogic.create_machine("t1", 100000, self)
 
                 try:
                     with open('Server/resources/ratDB2.json', 'r') as f:
@@ -291,7 +249,6 @@ class ManagerComponent:
                     print(question)
                     
                     new_data = {
-                        #TODO change to start_iRAT when topic is decided
                         "command": "start_iRAT",
                         **question
                         }
@@ -300,12 +257,10 @@ class ManagerComponent:
                 except Exception as err:
                     print("Error occured in Manager component after start_RAT error: {}".format(err))
 
-                # add the machine to the driver to start it
                 self.stm_driver.add_machine(timer_stm1)
             except Exception as err:
                 self._logger.error('Invalid arguments to command. {}'.format(err))
 
-        #Alle er ferdig med iRAT
         elif command == 'iRAT_done':
             irat_finished_counter += 1
             self._logger.debug('{} teams are done with iRAT'.format(irat_finished_counter))
@@ -332,8 +287,7 @@ class ManagerComponent:
             file_path = 'Server/resources/ratDB2.json'
             rat_names = read_rat_names(file_path)
             string = json.dumps({"command": "available_RATs", "rat_info": rat_names})
-            self.mqtt_client.publish(MQTT_TOPIC_TEACHER, string)
-            
+            self.mqtt_client.publish(MQTT_TOPIC_TEACHER, string)  
                 
         elif command == 'create_RAT':
             print("Creating RAT")
@@ -346,31 +300,22 @@ class ManagerComponent:
                 json.dump(data, f, indent=4)
     
     def __init__(self):
-        # get the logger object for the component
         self._logger = logging.getLogger(__name__)
         print('logging under name {}.'.format(__name__))
         self._logger.info('Starting Component')
-        # create a new MQTT client
         self._logger.debug('Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client = mqtt.Client()
-        # callback methods
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
-        # Connect to the broker
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-        # subscribe to proper topic(s) of your choice
         self.mqtt_client.subscribe(MQTT_TOPIC_INPUT)
-        # start the internal loop to process MQTT messages
         self.mqtt_client.loop_start()
-        # we start the stmpy driver, without any state machines for now
         self.stm_driver = stmpy.Driver()
         self.stm_driver.start(keep_active=True)
         self._logger.debug('Component initialization finished')
 
     def stop(self):
-        # stop the MQTT client
         self.mqtt_client.loop_stop()
-        # stop the state machine Driver
         self.stm_driver.stop()
 
 debug_level = logging.DEBUG
