@@ -16,8 +16,9 @@ MQTT_TOPIC = 'ttm4115/team_5/teacher'
 
 class Teacher:
     def __init__(self):
-        self.rats = {}             # dict with all RAT objects
-        self.available_rats = {} 
+        self.rats = {}             # dict with all RAT objects:             { rat_id: RAT-object }
+        self.available_rats = {}   # dict with available RATs from server:  { rat_id: rat_name }
+
         # get the logger object for the component
         self._logger = logging.getLogger(__name__)
         print('logging under name {}.'.format(__name__))
@@ -70,8 +71,8 @@ class Teacher:
 
     def create_rat(self, name, size, subject='TTM4115'):
         rat = Rat(name, size, subject)
-        self.rats[rat.id] = rat
-        self.available_rats[rat.id] = rat.name
+        self.rats[str(rat.id)] = rat
+        self.available_rats[str(rat.id)] = rat.name
         return rat
 
     def create_question(self, rat_id, question, correct, false):
@@ -133,7 +134,7 @@ class Rat:
     def __init__(self, name, size=0, subject='TTM4115', rat_id=None):
         self.name = name
         if rat_id == None:
-            self.id = uuid.uuid4()
+            self.id = str(uuid.uuid4())
         else:
             self.id = rat_id
         self.size = size
