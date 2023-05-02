@@ -24,7 +24,13 @@ Channel: "ttm4115/team_5/teacher"
 Function: Sends a message to the server with a RAT that is to be stored in the database
 JSON format:
 
-## start_iRAT
+## start_tRAT
+
+{
+"command": "start_tRAT",
+"team_id": "1",
+"leader": "1"
+}
 
 Command:
 Sender:
