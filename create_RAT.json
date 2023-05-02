@@ -1,0 +1,33 @@
+{
+  "command": "create_RAT",
+  "RAT": {
+    "id": "5397c02f-3572-42c4-b861-4f6cfb891186",
+    "name": "TestRAT",
+    "size": 2.0,
+    "subject": "TTM4115",
+    "questions": {
+      "1": {
+        "question": "Q1",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail1"
+      },
+      "2": {
+        "question": "Q2",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail3"
+      },
+
+      "10": {
+        "question": "Q10",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail3"
+      }
+    }
+  }
+}
