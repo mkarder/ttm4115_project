@@ -45,7 +45,7 @@ class TeacherUserInterface():
             d = app.getEntry("d")
             self.teacher.create_question(self.rat.id, q, a, [b, c, d])
 
-            app.label("Question", "Question " + str(self.rat.question_counter))
+            app.label("Question", "Question " + str(self.rat.question_counter + 1))
             app.entry("Question", "")
             app.entry("a", "")
             app.entry("b", "")

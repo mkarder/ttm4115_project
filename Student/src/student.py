@@ -86,7 +86,7 @@ class Student:
         elif command == "tRAT_done":
             self.stm.send("trat_done", "student")
         if command == "timer_team{}_expired".format(self.student["team"]):
-            self.stm.send("t2_expired", "student")
+            self.stm.send("t2", "student")
         elif command == "t1_expired":
             self.stm.send("t1", "student")
         
@@ -171,7 +171,7 @@ t5 = {'trigger': 'trat_done',
       'target': 'idle',
       'effect': 'trat_done'}
 
-t6 = {'trigger': 'trat_done',
+t6 = {'trigger': 't2',
       'source': 'waiting_for_leader',
       'target': 'idle',
       'effect': 'trat_done'}
