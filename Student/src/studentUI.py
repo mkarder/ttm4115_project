@@ -1,20 +1,6 @@
 # import the library
 import random
 from appJar import gui
-rat = {"name": "name1",
-       "size": "10",
-       "q1": {"q": "Hva er ost laget av?",
-              "alternatives": {
-                  "a": "meeee eeee e eeee eee eeeee eeee ee eee e eeeeee eeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeelk",
-                  "b": "ost",
-                  "c": "blomster",
-                  "d": "høy"}},
-       "q2": {"q": "Hva er ost laget av?",
-              "alternatives": {
-                  "a": "melk",
-                  "b": "ost",
-                  "c": "blomster",
-                  "d": "høy"}}}
 
 
 class StudentUI():
@@ -111,7 +97,8 @@ class StudentUI():
             i = 1
             for alternative in alt:
                 self.app.setMessage(
-                    "irat_" + str(i), self.rat["questions"][str(q_num)][alternative])
+                    "irat_" + str(i),
+                    self.rat["questions"][str(q_num)][alternative])
                 i += 1
 
             if str(q_num + 1) not in self.rat["questions"]:
@@ -161,7 +148,8 @@ class StudentUI():
             i = 1
             for alternative in alt:
                 self.app.setMessage(
-                    "trat_" + str(i), self.rat["questions"][str(q_num)][alternative])
+                    "trat_" + str(i),
+                    self.rat["questions"][str(q_num)][alternative])
                 i += 1
 
         def send_trat_answers():

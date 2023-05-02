@@ -1,10 +1,8 @@
 import paho.mqtt.client as mqtt
 import datetime
 import logging
-from threading import Thread
 import json
 import uuid
-from appJar import gui
 from teacherUserInterface import TeacherUserInterface
 
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
@@ -16,8 +14,11 @@ MQTT_TOPIC = 'ttm4115/team_5/teacher'
 
 class Teacher:
     def __init__(self):
-        self.rats = {}             # dict with all RAT objects:             { rat_id: RAT-object }
-        self.available_rats = {}   # dict with available RATs from server:  { rat_id: rat_name }
+        # dict with all RAT objects: { rat_id: RAT-object }
+        self.rats = {}
+
+        # dict with available RATs from server: { rat_id: rat_name }             
+        self.available_rats = {}
 
         # get the logger object for the component
         self._logger = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ class Teacher:
 
         # create a new MQTT client
         self._logger.debug(
-            'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
+            'Connecting to MQTT broker {} at port {}'
+            .format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client = mqtt.Client()
 
         # callback methods
@@ -53,7 +55,9 @@ class Teacher:
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
         except Exception as err:
-            self._logger.error('Message sent to topic {} had no valid JSON. Message ignored. {}'.format(msg.topic, err))
+            self._logger.error(
+                'Message had no valid JSON. Message ignored. {}'
+                .format(err))
             return
         command = payload.get('command')
         self._logger.debug('Command in message is {}'.format(command))
@@ -63,11 +67,12 @@ class Teacher:
                 # for k, v in temp:
                 #     self.rats[k] = Rat(v, 0)
                 # self.rats.update(payload.get('rat_info'))
-                
-            except Exception as err:
-                self._logger.error('Message sent with command {} had no valid RATs. Message ignored. {}'.format(command, err))
-                return
 
+            except Exception as err:
+                self._logger.error(
+                    'Message had no valid RATs. Ignored: {}'
+                    .format(err))
+                return
 
     def create_rat(self, name, size, subject='TTM4115'):
         rat = Rat(name, size, subject)
@@ -95,7 +100,8 @@ class Teacher:
                 return str(k)
 
     def publish_rat(self, rat_name):
-        """send MQTT message to server (manager) indicating which RAT (rat_id) should be made available."""
+        """send MQTT message to server (manager)
+        indicating which RAT (rat_id) should be made available."""
         rat_id = self.find_rat(rat_name)
         if rat_id:
             payload = json.dumps({
@@ -112,7 +118,6 @@ class Teacher:
         })
         self.mqtt_client.publish(MQTT_TOPIC, payload)
 
-
     def stop(self):
         """
         Stop the component.
@@ -122,6 +127,7 @@ class Teacher:
 
         # stop the state machine Driver
         self.stm_driver.stop()
+
 
 # Sub-classes for RAT and question objects
 class Rat:
@@ -133,7 +139,7 @@ class Rat:
 
     def __init__(self, name, size=0, subject='TTM4115', rat_id=None):
         self.name = name
-        if rat_id == None:
+        if rat_id is None:
             self.id = str(uuid.uuid4())
         else:
             self.id = rat_id
@@ -144,8 +150,12 @@ class Rat:
         self.rat_complete = False
 
     def reprJSON(self):
-        return dict(name=self.name, id=str(self.id), size=self.size, subject=self.subject, questions=self.questions)
-    
+        return dict(name=self.name,
+                    id=str(self.id),
+                    size=self.size,
+                    subject=self.subject,
+                    questions=self.questions)
+
     # Add Exception handling
     def create_question(self, question, correct, false):
         self.question_counter += 1
@@ -157,6 +167,7 @@ class Rat:
         else:
             q = Question(question, correct, false)
             self.questions[self.question_counter] = q
+
 
 class Question:
     question: str
@@ -173,25 +184,32 @@ class Question:
         self.c = false[2]
 
     def reprJSON(self):
-        return dict(question=self.question, correct=self.correct, a=self.a, b=self.b, c=self.c)
+        return dict(question=self.question,
+                    correct=self.correct,
+                    a=self.a,
+                    b=self.b,
+                    c=self.c)
+
 
 class ComplexEncoder(json.JSONEncoder):
     def default(self, obj):
-        if hasattr(obj,'reprJSON'):
+        if hasattr(obj, 'reprJSON'):
             return obj.reprJSON()
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 # Function for deserializing RAT
 # Probably only needed for students
-def load_RAT(d : dict):
-        rat = Rat(d['name'], d['size'], d['subject'], d['id'])
-        for k in d['questions']:
-            rat.create_question(d['questions'][k]['question'], 
-                                d['questions'][k]['correct'], 
-                                [d['questions'][k]['a'], d['questions'][k]['b'], d['questions'][k]['c']])
-            # rat.create_question(q['question'], q['correct'], [q['a'],q['b'],q['c']])
-        return rat
+def load_RAT(d: dict):
+    rat = Rat(d['name'], d['size'], d['subject'], d['id'])
+    for k in d['questions']:
+        rat.create_question(d['questions'][k]['question'],
+                            d['questions'][k]['correct'],
+                            [d['questions'][k]['a'],
+                            d['questions'][k]['b'],
+                            d['questions'][k]['c']])
+    return rat
 
 
 # logging.DEBUG: Most fine-grained logging, printing everything
@@ -209,5 +227,3 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 teacher = Teacher()
-
-

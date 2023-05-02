@@ -3,14 +3,10 @@ from appJar import gui
 import time
 
 
-# TO DO: fix question incrementer when creating new RATs
-# TO DO: fetch new, incoming RATs, so they can be published
 class TeacherUserInterface():
     def __init__(self, teacher):
         self.teacher = teacher
 
-        # self.rats = {"id1": {"name": "name1", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}},
-        #              "id2": {"name": "name2", "size": "10", "q1": {"q": "Hva er ost laget av?", "alternatives": {"a": "melk", "b": "ost", "c": "blomster", "d": "høy"}}}}
         self.rat = None
         self.create_ui()
 
@@ -29,7 +25,7 @@ class TeacherUserInterface():
 
             app.label("rat_name", self.rat.subject +
                       " " + name + "        " + str(int(size)))
-            app.label("Question", "Question " + str(self.rat.question_counter+1)) # Increment not working in UI
+            app.label("Question", "Question " + str(self.rat.question_counter+1))
             if self.rat.question_counter == self.rat.size:
                 app.hideButton("Next")
                 app.showButton("Save")
@@ -73,12 +69,12 @@ class TeacherUserInterface():
             app.clearListBox("Available RATs", callFunction=True)
             for k,v in self.teacher.available_rats.items():
                 app.addListItem("Available RATs", v)
-        
+
         app = gui("Teacher", "800x600")
         app.setSticky("")
         app.setExpand("both")
         app.setFont(20)
-        
+
         app.addLabel("title", "RATs", 0, 0, 2)
         app.addButton("new", new_rat, 0, 2)
         app.setButton("new", "New RAT")
@@ -86,13 +82,6 @@ class TeacherUserInterface():
         app.setButton("publish", "Publish selected RAT")
         app.addListBox("Available RATs", [], 2, 0, 2)
         refresh_rats()
-        
-        # i = 1
-        # for id in self.teacher.rats:
-        #     app.addLabel(id, id + "    " + self.teacher.rats[id]["name"], i, 0, 2)
-        #     app.addButton(id, publish_rat, i, 2)
-        #     app.setButton(id, "Publish")
-        #     i += 1
 
         # this is a subwindow for creating a new RAT
         app.startSubWindow("create_rat", "Create a RAT", modal=True)

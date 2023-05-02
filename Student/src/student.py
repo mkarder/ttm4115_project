@@ -1,13 +1,8 @@
 import paho.mqtt.client as mqtt
-import datetime
 import logging
 from threading import Thread
 import json
-import uuid
-from appJar import gui
 from studentUI import StudentUI
-from json import dumps
-
 from stmpy import Machine, Driver
 
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
@@ -43,7 +38,8 @@ class Student:
 
         # create a new MQTT client
         self._logger.debug(
-            'Connecting to MQTT broker {} at port {}'.format(MQTT_BROKER, MQTT_PORT))
+            'Connecting to MQTT broker {} at port {}'
+            .format(MQTT_BROKER, MQTT_PORT))
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
 
         self.client.subscribe(MQTT_TOPIC)
@@ -89,7 +85,6 @@ class Student:
             self.stm.send("t2", "student")
         elif command == "t1_expired":
             self.stm.send("t1", "student")
-        
 
     def stop(self):
         """
