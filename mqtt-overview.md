@@ -117,26 +117,32 @@ JSON format:
 {
   "command": "start_iRAT",
   "RAT": {
-    "1": {
-      "question": "What is the capital city of Norway?",
-      "correct": "Oslo",
-      "a": "Stockholm",
-      "b": "Copenhagen",
-      "c": "Helsinki"
-    },
-    "2": {
-      "question": "What is the largest organ in the human body?",
-      "correct": "Skin",
-      "a": "Heart",
-      "b": "Lung",
-      "c": "Liver"
-    },
-    "3": {
-      "question": "What is the tallest mountain in the world?",
-      "correct": "Mount Everest",
-      "a": "Mount Kilimanjaro",
-      "b": "Mount McKinley",
-      "c": "Mount Aconcagua"
+    "name": "Demo RAT",
+    "id": "d9b3a6c1-2eba-4767-be41-315bab3c5110",
+    "size": 3,
+    "subject": "TTM4115",
+    "questions": {
+      "1": {
+        "question": "test1",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail3"
+      },
+      "2": {
+        "question": "test2",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail3"
+      },
+      "3": {
+        "question": "test3",
+        "correct": "correct",
+        "a": "fail1",
+        "b": "fail2",
+        "c": "fail3"
+      }
     }
   }
 }
@@ -190,9 +196,9 @@ JSON format:
 
 ```json
 {
-   "command":"start_tRAT",
-   "team_ID": "1"
-   "leader_ID": "1"
+  "command": "start_tRAT",
+  "team_ID": "1",
+  "leader_ID": "1"
 }
 ```
 
