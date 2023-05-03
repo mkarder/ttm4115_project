@@ -3,7 +3,7 @@ import datetime
 import logging
 import json
 import uuid
-from teacherUserInterface import TeacherUserInterface
+from teacherUI import TeacherUserInterface
 
 MQTT_BROKER = 'mqtt20.iik.ntnu.no'
 MQTT_PORT = 1883
