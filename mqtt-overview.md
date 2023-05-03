@@ -2,17 +2,17 @@
 
 ## overview
 
-- create_RAT
-- fetch_RATs
-- available_RATs
-- start_RAT
-- start_iRAT
-- student_iRAT_done
-- iRAT_done
-- start_tRAT
-- tRAT_answers
-- tRAT_done
-- timer_expired
+1. create_RAT
+2. fetch_RATs
+3. available_RATs
+4. start_RAT
+5. start_iRAT
+6. student_iRAT_done
+7. iRAT_done
+8. start_tRAT
+9. tRAT_answers
+10. tRAT_done
+11. timer_expired
 
 ## 1. create_RAT
 
